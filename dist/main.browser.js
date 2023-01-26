@@ -37,6 +37,7 @@ async function get_channel_emote_set_id(channel) {
               connections {
                 id
                 display_name
+                emote_set_id
               }
             }
           }
@@ -54,11 +55,11 @@ async function get_emotes_in_set(set_id) {
             id: set_id
         },
         query: `
-      query GetEmoteSet($id: ObjectID!, $formats: [ImageFormat!]) {
+      query GetEmoteSet($id: ObjectID!) {
         emoteSet(id: $id) {
           emotes {
-            display_name
-            emote_set_id
+            id
+            name
           }
         }
       }
@@ -89,11 +90,16 @@ function add_emote(dest_set_id, emote) {
     `
     });
 }
-async function emote_adder(src_emote_set_id, dest_channel_display_name) {
+async function emote_adder(src_emote_set_id, dest_channel_display_name, hardcore_mode = false) {
     const emote_set_id = await get_channel_emote_set_id(dest_channel_display_name);
     const emotes = await get_emotes_in_set(src_emote_set_id);
-    for (const emote of emotes){
-        await add_emote(emote_set_id, emote);
+    if (hardcore_mode) {
+        const promises = emotes.map((emote)=>add_emote(emote_set_id, emote));
+        await Promise.allSettled(promises);
+    } else {
+        for (const emote of emotes){
+            await add_emote(emote_set_id, emote);
+        }
     }
 }
 if (typeof window !== "undefined") {

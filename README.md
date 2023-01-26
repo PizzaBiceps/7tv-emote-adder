@@ -1,8 +1,8 @@
 # 7TV Emote Adder
 
 - Open https://7tv.app/emotes in your web browser (you need to be logged in)
-- Paste the contents of [main.browser.js](./dist/main.browser.js) to into your
-  browser's console
+- Paste the contents of [dist/main.browser.js](./dist/main.browser.js) to into
+  your browser's console
 - In your browser's console, run:
 
 ```js

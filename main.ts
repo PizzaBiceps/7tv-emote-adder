@@ -4,6 +4,7 @@ type GetCurrentUserResponse = {
       editor_of: Array<{
         user: {
           connections: Array<{
+            id: string;
             display_name: string;
             emote_set_id: string;
           }>;
@@ -72,6 +73,7 @@ async function get_channel_emote_set_id(channel: string): Promise<string> {
               connections {
                 id
                 display_name
+                emote_set_id
               }
             }
           }
@@ -95,8 +97,8 @@ async function get_emotes_in_set(set_id: string): Promise<Emote[]> {
       query GetEmoteSet($id: ObjectID!, $formats: [ImageFormat!]) {
         emoteSet(id: $id) {
           emotes {
-            display_name
-            emote_set_id
+            id
+            name
           }
         }
       }
@@ -132,8 +134,12 @@ function add_emote(dest_set_id: string, emote: Emote) {
 }
 
 export async function emote_adder(
+  /** ID of emote set to add emotes from */
   src_emote_set_id: string,
+  /** Name of Twitch channel to add the emotes to */
   dest_channel_display_name: string,
+  /** Use on your own risk (run add requests in parallel) */
+  hardcore_mode = false,
 ) {
   const emote_set_id = await get_channel_emote_set_id(
     dest_channel_display_name,
@@ -141,7 +147,12 @@ export async function emote_adder(
 
   const emotes = await get_emotes_in_set(src_emote_set_id);
 
-  for (const emote of emotes) {
-    await add_emote(emote_set_id, emote);
+  if (hardcore_mode) {
+    const promises = emotes.map((emote) => add_emote(emote_set_id, emote));
+    await Promise.allSettled(promises);
+  } else {
+    for (const emote of emotes) {
+      await add_emote(emote_set_id, emote);
+    }
   }
 }
